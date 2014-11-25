@@ -51,6 +51,12 @@ On a debian based system:
 * gcc (tested on 4.9.1)
 * build-essential (tested on 11.7)
 
+Build & Run
+-----------
+To build just use the canonical command `make`and then just `./plaza` to run.
+
+To customize your name you can use `PLAZANICK=altnick ./plaza`
+
 Shortcuts
 ---------
 * Mouse wheel up / Page up : scrolls messages up
