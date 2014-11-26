@@ -72,30 +72,64 @@ static bool syncfile_is_opened()
 
 static void syncfile_ensure_close()
 {
-    if (syncfile_is_opened()) {
-        fclose(MSG_STREAM);
-        MSG_STREAM = NULL;
-    }
+    struct flock lock;
+
+    if (! syncfile_is_opened())
+        return;
+
+    // Release lock
+    lock.l_type = F_UNLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;                 // Lock the whole file
+    lock.l_pid = getpid();
+    if ( fcntl(fileno(MSG_STREAM), F_SETLKW, &lock) == -1 )
+        FATAL_ERROR("while trying to release lock");
+
+    fclose(MSG_STREAM);
+    MSG_STREAM = NULL;
 }
 
 static void syncfile_open_reading()
 {
+    struct flock lock;
+
     if (syncfile_is_opened())
         FATAL_MESSAGE("syncfile is already opened!");
 
     MSG_STREAM = fopen(PLAZA_SYNC_FILE, "r");
     if (MSG_STREAM == NULL)
         plazaio_file_error();
+
+    // Acquire lock
+    lock.l_type = F_RDLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;                 // Lock the whole file
+    lock.l_pid = getpid();
+    if ( fcntl(fileno(MSG_STREAM), F_SETLKW, &lock) == -1 )
+        FATAL_ERROR("while trying to aquire reading lock");
 }
 
 static void syncfile_open_writing()
 {
+    struct flock lock;
+
     if (syncfile_is_opened())
         FATAL_MESSAGE("syncfile is opened before writing!");
 
     MSG_STREAM = fopen(PLAZA_SYNC_FILE, "a");
     if (MSG_STREAM == NULL)
         plazaio_file_error();
+
+    // Acquire exclusive lock
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;                 // Lock the whole file
+    lock.l_pid = getpid();
+    if ( fcntl(fileno(MSG_STREAM), F_SETLKW, &lock) == -1 )
+        FATAL_ERROR("while trying to aquire writing lock");
 }
 
 /*
