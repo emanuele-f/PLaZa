@@ -39,8 +39,9 @@
 void plazaio_init();
 void plazaio_destroy();
 bool plazaio_incoming();
-int plazaio_reopen();
+int plazaio_begin();
 char * plazaio_next();
+void plazaio_end();
 void plazaio_send_message(plaza_message *);
 
 #endif

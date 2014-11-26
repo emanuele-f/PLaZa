@@ -172,7 +172,7 @@ static void plaza_show_messages(int delta)
     static int offset = 0;
     int i;
 
-    lines = plazaio_reopen();
+    lines = plazaio_begin();
     plaza_scroll_offset(PlazaUiInfo.msgwin.h, lines, &offset, delta);
     wclear(PlazaUiInfo.msgwin.win);
 
@@ -186,6 +186,7 @@ static void plaza_show_messages(int delta)
         i++;
     }
 
+    plazaio_end();
     plazaui_refresh_windows();
 }
 

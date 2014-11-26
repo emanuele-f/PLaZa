@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <sys/inotify.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <poll.h>
 #include "settings.h"
@@ -45,45 +46,67 @@ static int MSG_MAX_LENGTH = -1;
 static FILE * MSG_STREAM = NULL;
 static int MSG_NOTIFIER = -1;
 
-static int seek_line()
-{
-    // Read at most last PLAZA_SYNC_LINES
-    int lines=-1;
-    int i;
-
-    while(!feof(MSG_STREAM)) {
-        lines++;
-        fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
-    }
-    fseek(MSG_STREAM, 0, SEEK_SET);
-
-    if (lines > PLAZA_SYNC_LINES) {
-        for(i=0; i<lines-PLAZA_SYNC_LINES; i++)
-            fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
-        return PLAZA_SYNC_LINES;
-    }
-    return lines;
-}
-
 static void plazaio_file_error()
 {
     FATAL_ERROR("Cannot open message stream '" PLAZA_SYNC_FILE "'");
 }
 
-void plazaio_init()
+static void syncfile_ensure_exists()
 {
-    /*
-     * Initializes the library to be ready to handle messages.
-     */
+    int fd;
 
-    MSG_MAX_LENGTH = plaza_message_maxlength();
-    MSG_LINE_BUFFER = malloc(MSG_MAX_LENGTH+1);
-    MSG_STREAM = fopen(PLAZA_SYNC_FILE, "a+");
+    fd = open(PLAZA_SYNC_FILE, O_CREAT | O_EXCL,
+        (S_IRWXU & ~S_IXUSR) | (S_IRWXG & ~S_IXGRP)
+    );
+
+    if (fd != -1) {
+        LOG_MESSAGE("New empty syncfile created");
+        close(fd);
+    }
+}
+
+static bool syncfile_is_opened()
+{
+    return MSG_STREAM != NULL;
+}
+
+static void syncfile_ensure_close()
+{
+    if (syncfile_is_opened()) {
+        fclose(MSG_STREAM);
+        MSG_STREAM = NULL;
+    }
+}
+
+static void syncfile_open_reading()
+{
+    if (syncfile_is_opened())
+        FATAL_MESSAGE("syncfile is already opened!");
+
+    MSG_STREAM = fopen(PLAZA_SYNC_FILE, "r");
     if (MSG_STREAM == NULL)
         plazaio_file_error();
-    fseek(MSG_STREAM, 0, SEEK_SET);
-    seek_line();
+}
 
+static void syncfile_open_writing()
+{
+    if (syncfile_is_opened())
+        FATAL_MESSAGE("syncfile is opened before writing!");
+
+    MSG_STREAM = fopen(PLAZA_SYNC_FILE, "a");
+    if (MSG_STREAM == NULL)
+        plazaio_file_error();
+}
+
+/*
+ * Initializes the library.
+ */
+void plazaio_init()
+{
+    MSG_MAX_LENGTH = plaza_message_maxlength();
+    MSG_LINE_BUFFER = malloc(MSG_MAX_LENGTH+1);
+
+    syncfile_ensure_exists();
     MSG_NOTIFIER = inotify_init();
     inotify_add_watch(MSG_NOTIFIER, PLAZA_SYNC_FILE, IN_MODIFY);
 }
@@ -94,10 +117,7 @@ void plazaio_destroy()
     free(MSG_LINE_BUFFER);
     MSG_LINE_BUFFER = NULL;
 
-    if (MSG_STREAM != NULL) {
-        fclose(MSG_STREAM);
-        MSG_STREAM = NULL;
-    }
+    syncfile_ensure_close();
 
     if (MSG_NOTIFIER != -1) {
         close(MSG_NOTIFIER);
@@ -105,14 +125,14 @@ void plazaio_destroy()
     }
 }
 
+/*
+ * Checks for incoming messages.
+ * @RETURN
+ *      True: new messages available
+ *      False: no new messages available
+ */
 bool plazaio_incoming()
 {
-    /*
-     * Checks for incoming messages.
-     * @RETURN
-     *      True: new messages available
-     *      False: no new messages available
-     */
     struct pollfd pfd = {MSG_NOTIFIER, POLLIN, 0};
     struct inotify_event event;
 
@@ -123,44 +143,75 @@ bool plazaio_incoming()
     return false;
 }
 
-int plazaio_reopen()
+/*
+ * Begin reading messages. You can now call plazaio_next.
+ *
+ * @RETURN
+ *   Number of lines available for reading.
+ */
+int plazaio_begin()
 {
-    // Return number of lines read
-    MSG_STREAM = freopen(NULL, "r", MSG_STREAM);
-    if (MSG_STREAM == NULL)
-        plazaio_file_error();
-    return seek_line();
+    // Read at most last PLAZA_SYNC_LINES
+    int lines=-1;
+    int i;
+
+    syncfile_open_reading();
+
+    // Count total lines
+    while(!feof(MSG_STREAM)) {
+        lines++;
+        fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
+    }
+
+    // Actual seeking
+    fseek(MSG_STREAM, 0, SEEK_SET);
+    if (lines > PLAZA_SYNC_LINES) {
+        // Skip lines
+        for(i=0; i<lines-PLAZA_SYNC_LINES; i++)
+            fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
+        return PLAZA_SYNC_LINES;
+    }
+    return lines;
 }
 
+/*
+ * End reading messages.
+ */
+void plazaio_end()
+{
+    syncfile_ensure_close();
+}
+
+/*
+ * Next message line or NULL.
+ * Calling 'plazaio_end' after NULL is not necessary.
+ */
 char * plazaio_next()
 {
-    /*
-     * Next message line or NULL.
-     */
-    fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
-
-    if (feof(MSG_STREAM))
+    if (! syncfile_is_opened())
         return NULL;
+
+    fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
+    if (feof(MSG_STREAM)) {
+        plazaio_end();
+        return NULL;
+    }
     return MSG_LINE_BUFFER;
 }
 
+/*
+ * Sends message data. After this call, msg data is no more available!
+ */
 void plazaio_send_message(plaza_message *msg)
 {
-    /*
-     * Sends message data. After this call, msg data is no more available!
-     */
-
     char *data;
 
     data = plazamsg_sign(msg);
-
-    MSG_STREAM = freopen(NULL, "a", MSG_STREAM);
-    if (MSG_STREAM == NULL)
-        plazaio_file_error();
+    syncfile_open_writing();
 
     if ( fprintf(MSG_STREAM, "%s", data) == 0)
         FATAL_ERROR("Cannot write message");
 
-    plazaio_reopen();
+    syncfile_ensure_close();
     plazamsg_clean(msg);
 }
