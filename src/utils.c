@@ -35,7 +35,7 @@
 #include "utils.h"
 #include "gui.h"
 
-static int open_logfile()
+static FILE * open_logfile()
 {
     FILE * f;
     if ((f = fopen(PLAZA_LOG_FILE, "a")) == NULL)
@@ -43,6 +43,30 @@ static int open_logfile()
     return f;
 }
 
+void LOG_MESSAGE(char * msg)
+{
+    FILE * f;
+
+    f = open_logfile();
+    fprintf(f, "[M] %s\n", msg);
+    fclose(f);
+}
+
+void FATAL_MESSAGE(char * msg)
+{
+    FILE * f;
+
+    f = open_logfile();
+    fprintf(f, "[E] %s\n", msg);
+    fclose(f);
+
+    plazaui_destroy();
+    exit(1);
+}
+
+/*
+ * Like FATAL_MESSAGE, but alsa shows errno info
+ */
 void FATAL_ERROR(char * msg)
 {
     FILE * f;
@@ -53,15 +77,6 @@ void FATAL_ERROR(char * msg)
 
     plazaui_destroy();
     exit(1);
-}
-
-void LOG_MESSAGE(char * msg)
-{
-    FILE * f;
-
-    f = open_logfile();
-    fprintf(f, "[M] %s\n", msg);
-    fclose(f);
 }
 
 int plaza_get_escaped_key(WINDOW * w)
