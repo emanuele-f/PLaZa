@@ -35,18 +35,33 @@
 #include "utils.h"
 #include "gui.h"
 
-void FATAL_ERROR(char * msg) {
+static int open_logfile()
+{
+    FILE * f;
+    if ((f = fopen(PLAZA_LOG_FILE, "a")) == NULL)
+        return stderr;
+    return f;
+}
+
+void FATAL_ERROR(char * msg)
+{
     FILE * f;
 
-    if ((f = fopen(PLAZA_LOG_FILE, "a")) == NULL)
-        f = stderr;
-
-
+    f = open_logfile();
     fprintf(f, "[E] %s, errno %i: %s\n", msg, errno, strerror(errno));
     fclose(f);
 
     plazaui_destroy();
     exit(1);
+}
+
+void LOG_MESSAGE(char * msg)
+{
+    FILE * f;
+
+    f = open_logfile();
+    fprintf(f, "[M] %s\n", msg);
+    fclose(f);
 }
 
 int plaza_get_escaped_key(WINDOW * w)

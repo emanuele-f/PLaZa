@@ -70,5 +70,6 @@ void plaza_drop_palette(WINDOW * win, int palette);
 void plaza_init_colors();
 bool plaza_scroll_offset(int, int, int*, int);
 void FATAL_ERROR(char*);
+void LOG_MESSAGE(char * msg)
 
 #endif
