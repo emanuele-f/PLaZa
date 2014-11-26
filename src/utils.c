@@ -48,7 +48,7 @@ void LOG_MESSAGE(char * msg)
     FILE * f;
 
     f = open_logfile();
-    fprintf(f, "[M] %s\n", msg);
+    fprintf(f, "[D] %s\n", msg);
     fclose(f);
 }
 
