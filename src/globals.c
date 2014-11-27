@@ -70,6 +70,6 @@ void plaza_unload_nickname()
 
 int plaza_message_maxlength()
 {
-    // max message length without null       NICK: MSG
-    return PlazaUsernick_L+2+PLAZA_MAX_MSGSIZE;
+    // max message length with null bytes       NICK: MSG
+    return PlazaUsernick_L+2+PLAZA_MAX_MSGSIZE+1;
 }

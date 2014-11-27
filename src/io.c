@@ -49,7 +49,6 @@ static int AVAILABLE_LINES = -1;
 static char * MESSAGES_CACHE = NULL;
 static int MESSAGES_CACHE_CUR = -1;
 static bool MESSAGES_CACHE_LOADED = false;
-static int MESSAGES_CACHE_USIZE = -1;
 
 static void plazaio_file_error()
 {
@@ -147,11 +146,9 @@ void plazaio_init()
     MSG_NOTIFIER = inotify_init();
     inotify_add_watch(MSG_NOTIFIER, PLAZA_SYNC_FILE, IN_MODIFY);
 
-    MESSAGES_CACHE_USIZE = plaza_message_maxlength()+1;
-
     // Allocate message cache
     MESSAGES_CACHE = (char *) malloc(
-        MESSAGES_CACHE_USIZE * PLAZA_SYNC_LINES);
+        MSG_MAX_LENGTH * PLAZA_SYNC_LINES);
     if (MESSAGES_CACHE == NULL)
         FATAL_ERROR("Cannot allocate message cache");
     MESSAGES_CACHE_LOADED = false;
@@ -231,7 +228,7 @@ int plazaio_begin()
             fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
             if (feof(MSG_STREAM))
                 FATAL_MESSAGE("Unexpected end of messages");
-            cacheline += MESSAGES_CACHE_USIZE;
+            cacheline += MSG_MAX_LENGTH;
         }
 
         syncfile_ensure_close();
@@ -262,7 +259,7 @@ char * plazaio_next()
     if (MESSAGES_CACHE_CUR >= AVAILABLE_LINES)
         return NULL;
 
-    msg = MESSAGES_CACHE + MESSAGES_CACHE_USIZE*MESSAGES_CACHE_CUR;
+    msg = MESSAGES_CACHE + MSG_MAX_LENGTH*MESSAGES_CACHE_CUR;
     MESSAGES_CACHE_CUR += 1;
     return msg;
 }
