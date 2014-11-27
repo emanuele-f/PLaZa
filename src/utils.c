@@ -238,7 +238,7 @@ bool plaza_scroll_offset(int boxS, int contentS, int * offset, int delta)
     orig = *offset;
     *offset = value;
 
-    #ifdef PLAZA_DEBUG_OFFSET
+    #ifdef PLAZA_DEBUGON
         WINDOW * win = PlazaUiInfo.title.win;
         int x,y;
         getyx(win, x, y);

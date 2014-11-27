@@ -45,6 +45,7 @@ static char * MSG_LINE_BUFFER = NULL;
 static int MSG_MAX_LENGTH = -1;
 static FILE * MSG_STREAM = NULL;
 static int MSG_NOTIFIER = -1;
+static bool NEW_MESSAGES = true;
 
 static void plazaio_file_error()
 {
@@ -170,8 +171,12 @@ bool plazaio_incoming()
     struct pollfd pfd = {MSG_NOTIFIER, POLLIN, 0};
     struct inotify_event event;
 
+    if (NEW_MESSAGES)
+        return true;
+
     if ( poll(&pfd, 1, 0)>0 ) {
         read(MSG_NOTIFIER, &event, sizeof(event));
+        NEW_MESSAGES = true;
         return true;
     }
     return false;
@@ -228,6 +233,7 @@ char * plazaio_next()
     fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
     if (feof(MSG_STREAM)) {
         plazaio_end();
+        NEW_MESSAGES = false;
         return NULL;
     }
     return MSG_LINE_BUFFER;
