@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define max(x,y) (x > y ? x : y)
 #define min(x,y) (x < y ? x : y)
 #define _STR_HELPER(x) #x
 #define STR(x) _STR_HELPER(x)

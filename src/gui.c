@@ -203,9 +203,7 @@ void plazaui_mainloop()
     int x,y;
 
     plazamsg_init(&msg);
-
-    // Overflow to scroll bottom
-    plaza_show_messages(PlazaUiInfo.msgwin.h);
+    plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
 
     while (run) {
         wmove(PlazaUiInfo.cmdwin.win, 0, 0);
@@ -226,8 +224,7 @@ void plazaui_mainloop()
 
             if (ch == ERR) {
                 if (plazaio_incoming())
-                    // Overflow to scroll bottom
-                    plaza_show_messages(PlazaUiInfo.msgwin.h);
+                    plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
                 continue;
             }
 

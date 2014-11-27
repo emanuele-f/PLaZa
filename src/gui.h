@@ -34,12 +34,16 @@
 #define __PLAZA_GUI_H
 
 #include <ncurses.h>
+#include "globals.h"
+#include "settings.h"
 
 typedef struct plazaui_window {
     WINDOW *win;
     int w;
     int h;
 } plazaui_window;
+
+#define PLAZAUI_SCROLL_BOTTOM max(PlazaUiInfo.msgwin.h, PLAZA_SYNC_LINES)
 
 typedef struct plazaui_info {
     plazaui_window term;
