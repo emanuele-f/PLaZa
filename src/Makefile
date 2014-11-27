@@ -1,9 +1,9 @@
-all: main
+all: ../plaza
 
 clean:
 	rm -f *.o 2>/dev/null
 
-main: globals.o io.o gui.o main.c
+../plaza: globals.o io.o gui.o main.c
 	gcc -lncurses -Wall -O2 -o ../plaza globals.o utils.o message.o io.o gui.o main.c
 
 globals.o: globals.h globals.c
