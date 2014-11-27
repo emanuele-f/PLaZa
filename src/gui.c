@@ -159,10 +159,11 @@ static void print_message(char * msg)
             PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_OTHERS);
         }
 
-    }
     PLAZA_USE_MSG_PALETTE(PLAZA_PALETTE_TEXT, false);
     wprintw(PlazaUiInfo.msgwin.win, dots);
     PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_TEXT);
+
+    }
 }
 
 static void plaza_show_messages(int delta)
