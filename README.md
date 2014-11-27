@@ -75,6 +75,6 @@ Known Issues
 
 TODO
 ----
-- [ ] Line buffering and differential read
+- [x] Line buffering
 - [ ] Fix scroll issues by grouping messages by lines
 - [ ] Full left-right-up-down-home-end keys support (winsdelln ?)

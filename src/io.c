@@ -41,11 +41,15 @@
 #include "utils.h"
 #include "gui.h"
 
-static char * MSG_LINE_BUFFER = NULL;
 static int MSG_MAX_LENGTH = -1;
 static FILE * MSG_STREAM = NULL;
 static int MSG_NOTIFIER = -1;
 static bool NEW_MESSAGES = true;
+static int AVAILABLE_LINES = -1;
+static char * MESSAGES_CACHE = NULL;
+static int MESSAGES_CACHE_CUR = -1;
+static bool MESSAGES_CACHE_LOADED = false;
+static int MESSAGES_CACHE_USIZE = -1;
 
 static void plazaio_file_error()
 {
@@ -138,19 +142,26 @@ static void syncfile_open_writing()
  */
 void plazaio_init()
 {
-    MSG_MAX_LENGTH = plaza_message_maxlength();
-    MSG_LINE_BUFFER = malloc(MSG_MAX_LENGTH+1);
-
     syncfile_ensure_exists();
+    MSG_MAX_LENGTH = plaza_message_maxlength();
     MSG_NOTIFIER = inotify_init();
     inotify_add_watch(MSG_NOTIFIER, PLAZA_SYNC_FILE, IN_MODIFY);
+
+    MESSAGES_CACHE_USIZE = plaza_message_maxlength()+1;
+
+    // Allocate message cache
+    MESSAGES_CACHE = (char *) malloc(
+        MESSAGES_CACHE_USIZE * PLAZA_SYNC_LINES);
+    if (MESSAGES_CACHE == NULL)
+        FATAL_ERROR("Cannot allocate message cache");
+    MESSAGES_CACHE_LOADED = false;
 }
 
 void plazaio_destroy()
 {
     MSG_MAX_LENGTH = -1;
-    free(MSG_LINE_BUFFER);
-    MSG_LINE_BUFFER = NULL;
+    free(MESSAGES_CACHE);
+    MESSAGES_CACHE = NULL;
 
     syncfile_ensure_close();
 
@@ -193,24 +204,42 @@ int plazaio_begin()
     // Read at most last PLAZA_SYNC_LINES
     int lines=-1;
     int i;
+    char * cacheline = MESSAGES_CACHE;
 
-    syncfile_open_reading();
+    if (! MESSAGES_CACHE_LOADED || plazaio_incoming()) {
+        // Cache update
+        syncfile_open_reading();
 
-    // Count total lines
-    while(!feof(MSG_STREAM)) {
-        lines++;
-        fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
+        // Count total lines
+        while(!feof(MSG_STREAM)) {
+            lines++;
+            fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+        }
+
+        // Actual seeking
+        fseek(MSG_STREAM, 0, SEEK_SET);
+        if (lines > PLAZA_SYNC_LINES) {
+            // Skip lines
+            for(i=0; i<lines-PLAZA_SYNC_LINES; i++)
+                fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+            AVAILABLE_LINES = PLAZA_SYNC_LINES;
+        } else
+            AVAILABLE_LINES = lines;
+
+        // Cache lines
+        for(i=0; i<AVAILABLE_LINES; i++) {
+            fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+            if (feof(MSG_STREAM))
+                FATAL_MESSAGE("Unexpected end of messages");
+            cacheline += MESSAGES_CACHE_USIZE;
+        }
+
+        syncfile_ensure_close();
+        MESSAGES_CACHE_LOADED = true;
     }
-
-    // Actual seeking
-    fseek(MSG_STREAM, 0, SEEK_SET);
-    if (lines > PLAZA_SYNC_LINES) {
-        // Skip lines
-        for(i=0; i<lines-PLAZA_SYNC_LINES; i++)
-            fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
-        return PLAZA_SYNC_LINES;
-    }
-    return lines;
+    MESSAGES_CACHE_CUR = 0;
+    NEW_MESSAGES = false;
+    return AVAILABLE_LINES;
 }
 
 /*
@@ -218,25 +247,24 @@ int plazaio_begin()
  */
 void plazaio_end()
 {
-    syncfile_ensure_close();
 }
 
 /*
  * Next message line or NULL.
- * Calling 'plazaio_end' after NULL is not necessary.
  */
 char * plazaio_next()
 {
-    if (! syncfile_is_opened())
+    char * msg;
+
+    if (! MESSAGES_CACHE_LOADED)
         return NULL;
 
-    fgets(MSG_LINE_BUFFER, MSG_MAX_LENGTH, MSG_STREAM);
-    if (feof(MSG_STREAM)) {
-        plazaio_end();
-        NEW_MESSAGES = false;
+    if (MESSAGES_CACHE_CUR >= AVAILABLE_LINES)
         return NULL;
-    }
-    return MSG_LINE_BUFFER;
+
+    msg = MESSAGES_CACHE + MESSAGES_CACHE_USIZE*MESSAGES_CACHE_CUR;
+    MESSAGES_CACHE_CUR += 1;
+    return msg;
 }
 
 /*
