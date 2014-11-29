@@ -78,3 +78,4 @@ TODO
 - [x] Line buffering
 - [ ] Fix scroll issues by grouping messages by lines
 - [ ] Full left-right-up-down-home-end keys support (winsdelln ?)
+- [ ] Properly handle window resizing
