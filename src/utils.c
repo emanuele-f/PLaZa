@@ -243,9 +243,9 @@ bool plaza_scroll_offset(int boxS, int contentS, int * offset, int delta)
         int x,y;
         getyx(win, x, y);
         wmove(win, PlazaUiInfo.title.h-2, 2);
-        vwprintw(win, "Hei=%3i", &boxS);
-        vwprintw(win, " Lin=%3i", &contentS);
-        vwprintw(win, " Off=%3i", offset);
+        wprintw(win, "Hei=%3i", boxS);
+        wprintw(win, " Lin=%3i", contentS);
+        wprintw(win, " Off=%3i", *offset);
         wmove(win, x, y);
         wrefresh(win);
         plazaui_refresh_windows();
