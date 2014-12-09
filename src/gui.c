@@ -217,7 +217,8 @@ static int print_message(char * msg)
 
     dots = strstr(msg, ": ");
     if (dots != NULL) {
-        if (strstr(msg, PlazaUsernick) == NULL) {
+        char * x = strstr(msg, PlazaUsernick);
+        if ( (x == NULL) || (x != msg) || (dots != msg+PlazaUsernick_L)) {
             PLAZA_USE_MSG_PALETTE(PLAZA_PALETTE_OTHERS, true);
             plaza_printn(PlazaUiInfo.msgwin.win, msg, dots-msg);
             PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_OTHERS);
