@@ -323,20 +323,20 @@ void plazaui_mainloop()
                             wmove(PlazaUiInfo.cmdwin.win, y-1, x);
                             break;
                         case KEY_DOWN:
-                            wmove(PlazaUiInfo.cmdwin.win, y+1, x);
+                            //~ wmove(PlazaUiInfo.cmdwin.win, y+1, x);
                             break;
                         case KEY_RIGHT:
                             //~ waddch(PlazaUiInfo.cmdwin.win, ' ');
-                            wmove(PlazaUiInfo.cmdwin.win, y, x+1);
+                            //~ wmove(PlazaUiInfo.cmdwin.win, y, x+1);
                             break;
                         case KEY_LEFT:
-                            wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+                            //~ wmove(PlazaUiInfo.cmdwin.win, y, x-1);
                             break;
                         case KEY_HOME:
-                            wmove(PlazaUiInfo.cmdwin.win, y, 0);
+                            //~ wmove(PlazaUiInfo.cmdwin.win, y, 0);
                             break;
                         case KEY_END:
-                            wmove(PlazaUiInfo.cmdwin.win, y, i);
+                            //~ wmove(PlazaUiInfo.cmdwin.win, y, i);
                             break;
                         case KEY_PAGEDOWN:
                             plaza_show_messages(PLAZA_MOUSE_STEP);
