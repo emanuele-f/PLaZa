@@ -204,9 +204,16 @@ void plazaui_refresh_windows() {
     wrefresh(PlazaUiInfo.cmdwin.win);
 }
 
-static void print_message(char * msg)
+static int print_message(char * msg)
 {
+    // Returns written lines
     char *dots;
+    const int maxl = PlazaUiInfo.msgwin.w-(PlazaUsernick_L+2);
+    //~ char oldch;
+    int lines=0;
+    //~ int x, y, i;
+    //~ getyx(PlazaUiInfo.msgwin.win, y, i);
+    //~ x = PlazaUsernick_L+2;
 
     dots = strstr(msg, ": ");
     if (dots != NULL) {
@@ -220,15 +227,38 @@ static void print_message(char * msg)
             PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_OTHERS);
         }
 
-    PLAZA_USE_MSG_PALETTE(PLAZA_PALETTE_TEXT, false);
-    wprintw(PlazaUiInfo.msgwin.win, dots);
-    PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_TEXT);
+        PLAZA_USE_MSG_PALETTE(PLAZA_PALETTE_TEXT, false);
+        lines = strlen(dots) / maxl + ((strlen(dots) % maxl) && 1);
+        wprintw(PlazaUiInfo.msgwin.win, dots);
 
+        // This can be used to 'shift' the multiline messages of some space
+
+        //~ for (i=0; i<lines; i++) {
+            //~ oldch = dots[maxl];
+            //~ dots[maxl] = '\0';
+            //~ wprintw(PlazaUiInfo.msgwin.win, dots);
+            //~ y++;
+            //~ wmove(PlazaUiInfo.msgwin.win, y, x);
+            //~ dots[maxl] = oldch;
+            //~ dots += maxl;
+        //~ }
+        //~ if (strlen(dots) % maxl) {
+            // Last line
+            //~ wprintw(PlazaUiInfo.msgwin.win, dots);
+            //~ lines++;
+        //~ }
+
+        PLAZA_DROP_MSG_PALETTE(PLAZA_PALETTE_TEXT);
     }
+
+    return lines;
 }
 
 static void plaza_show_messages(int delta)
 {
+    // NB. In order to implement scrolling correctly, we would need to be
+    // able to read records in reverse order.
+
     char * msg;
     int lines;
     static int offset = 0;
@@ -240,10 +270,8 @@ static void plaza_show_messages(int delta)
 
     i = -offset;
     while ( (msg=plazaio_next()) != NULL && i<PlazaUiInfo.msgwin.h) {
-        if (i >= 0) //{
+        if (i >= 0)
             print_message(msg);
-            //~ offset += strlen(msg)/PlazaUiInfo.msgwin.w+1;
-        //~ }
         //~ else
         i++;
     }
