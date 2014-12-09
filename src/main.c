@@ -36,6 +36,11 @@ void interrupt_handler(int signum)
     plazaui_async_cmd_clear();
 }
 
+void resize_handler(int signum)
+{
+    plazaui_async_resize();
+}
+
 int main(int argc, char *argv[], char *envp[]) {
     plaza_load_nickname();
     plazaui_init();
@@ -43,6 +48,8 @@ int main(int argc, char *argv[], char *envp[]) {
     // Intercept CTRL+C to clear cmd line
     if (signal (SIGINT, interrupt_handler) == SIG_IGN)
         signal (SIGINT, SIG_IGN);
+    // Intercept resize signal
+    signal(SIGWINCH, resize_handler);
 
     plazaui_mainloop();
 

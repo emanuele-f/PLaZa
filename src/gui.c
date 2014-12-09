@@ -43,13 +43,27 @@
 
 plazaui_info PlazaUiInfo;
 static bool _PLAZAUI_CMD_MUST_CLEAN = false;
+static bool _PLAZAUI_MUST_RESIZE = false;
 
-static void plaza_create_windows()
+static void plaza_update_uiinfo()
 {
-    // Title window
-    PlazaUiInfo.title.win = newwin(
-        PlazaUiInfo.title.h, PlazaUiInfo.title.w,
-        0, 0);
+    // Fill in PlazaUiInfo structure
+    getmaxyx(stdscr, PlazaUiInfo.term.h, PlazaUiInfo.term.w);
+    PlazaUiInfo.cmdbox.h = PLAZA_CMD_HEIGHT;
+    PlazaUiInfo.title.h = PLAZA_TITLE_HEIGHT;
+    PlazaUiInfo.msgbox.h = PlazaUiInfo.term.h - PLAZA_CMD_HEIGHT -
+        PlazaUiInfo.title.h;
+    PlazaUiInfo.msgbox.w = PlazaUiInfo.cmdbox.w = PlazaUiInfo.title.w =
+        PlazaUiInfo.term.w;
+
+    PlazaUiInfo.msgwin.h = PlazaUiInfo.msgbox.h-PLAZA_OUT_PADDING_Y*2;
+    PlazaUiInfo.msgwin.w = PlazaUiInfo.msgbox.w-PLAZA_OUT_PADDING_X*2;
+    PlazaUiInfo.cmdwin.h = PlazaUiInfo.cmdbox.h-PLAZA_CMD_PADDING_Y*2;
+    PlazaUiInfo.cmdwin.w = PlazaUiInfo.cmdbox.w-PLAZA_CMD_PADDING_X*2;
+}
+
+static void init_windows_content()
+{
     wborder(PlazaUiInfo.title.win, '|', '|', ' ',' ','/','\\','\\','/');
     wmove(PlazaUiInfo.title.win, 1, (PlazaUiInfo.title.w-16)/2);
     plaza_use_palette(PlazaUiInfo.title.win, PLAZA_PALETTE_TITLE, true);
@@ -61,34 +75,88 @@ static void plaza_create_windows()
     plaza_drop_palette(PlazaUiInfo.title.win, PLAZA_PALETTE_SELF);
     wrefresh(PlazaUiInfo.title.win);
 
+    //~ box(PlazaUiInfo.msgbox.win, 0x0,0x0);
+    wborder(PlazaUiInfo.msgbox.win, ';', ';', ':',':','+','+','+','+');
+    //~ wborder(PlazaUiInfo.cmdbox.win, '*', '*', '*','*','*','*','*','*');
+
+    box(PlazaUiInfo.cmdbox.win, 0x0,0x0);
+
+    // Refresh with borders
+    wrefresh(PlazaUiInfo.msgbox.win);
+    wrefresh(PlazaUiInfo.cmdbox.win);
+}
+
+static void plaza_create_windows()
+{
+    // Title window
+    PlazaUiInfo.title.win = newwin(
+        PlazaUiInfo.title.h, PlazaUiInfo.title.w,
+        0, 0);
+
     // Create output window
     PlazaUiInfo.msgbox.win = newwin(
         PlazaUiInfo.msgbox.h, PlazaUiInfo.msgbox.w,
         PlazaUiInfo.title.h, 0);
-    //~ box(PlazaUiInfo.msgbox.win, 0x0,0x0);
-    wborder(PlazaUiInfo.msgbox.win, ';', ';', ':',':','+','+','+','+');
+
     PlazaUiInfo.msgwin.win = derwin(PlazaUiInfo.msgbox.win,
         PlazaUiInfo.msgwin.h,
         PlazaUiInfo.msgwin.w,
         PLAZA_OUT_PADDING_Y, PLAZA_OUT_PADDING_X);
-    scrollok(PlazaUiInfo.msgwin.win, TRUE);
 
     // Create command window
     PlazaUiInfo.cmdbox.win = newwin(
         PlazaUiInfo.cmdbox.h, PlazaUiInfo.cmdbox.w,
         PlazaUiInfo.msgbox.h+PlazaUiInfo.title.h, 0);
-    box(PlazaUiInfo.cmdbox.win, 0x0,0x0);
-    //~ wborder(PlazaUiInfo.cmdbox.win, '*', '*', '*','*','*','*','*','*');
+
     PlazaUiInfo.cmdwin.win = derwin(PlazaUiInfo.cmdbox.win,
         PlazaUiInfo.cmdwin.h,
         PlazaUiInfo.cmdwin.w,
         PLAZA_CMD_PADDING_Y, PLAZA_CMD_PADDING_X);
+
+    // Set attributes
+    scrollok(PlazaUiInfo.msgwin.win, TRUE);
     scrollok(PlazaUiInfo.cmdwin.win, TRUE);
     plaza_use_palette(PlazaUiInfo.cmdwin.win, PLAZA_PALETTE_CMD, true);
 
-    // Refresh with borders
-    wrefresh(PlazaUiInfo.msgbox.win);
-    wrefresh(PlazaUiInfo.cmdbox.win);
+    init_windows_content();
+}
+
+static void plaza_update_windows()
+{
+    // From PlazaUiInfo structure
+    wresize(PlazaUiInfo.title.win, PlazaUiInfo.title.h,
+        PlazaUiInfo.title.w);
+
+    wclear(PlazaUiInfo.msgbox.win);
+    wresize(PlazaUiInfo.msgbox.win, PlazaUiInfo.msgbox.h,
+        PlazaUiInfo.msgbox.w);
+    mvwin(PlazaUiInfo.msgbox.win, PlazaUiInfo.title.h, 0);
+    wresize(PlazaUiInfo.msgwin.win, PlazaUiInfo.msgwin.h,
+        PlazaUiInfo.msgwin.w);
+    mvderwin(PlazaUiInfo.msgwin.win,
+        PLAZA_OUT_PADDING_Y, PLAZA_OUT_PADDING_X);
+
+    wclear(PlazaUiInfo.cmdbox.win);
+    wresize(PlazaUiInfo.cmdbox.win,
+        PlazaUiInfo.cmdbox.h, PlazaUiInfo.cmdbox.w);
+    mvwin(PlazaUiInfo.cmdbox.win,
+        PlazaUiInfo.msgbox.h+PlazaUiInfo.title.h, 0);
+
+    // Command window must be deleted due to cursor
+    delwin(PlazaUiInfo.cmdwin.win);
+    PlazaUiInfo.cmdwin.win = derwin(PlazaUiInfo.cmdbox.win,
+        PlazaUiInfo.cmdwin.h,
+        PlazaUiInfo.cmdwin.w,
+        PLAZA_CMD_PADDING_Y, PLAZA_CMD_PADDING_X);
+    plaza_use_palette(PlazaUiInfo.cmdwin.win, PLAZA_PALETTE_CMD, true);
+    /*
+    wresize(PlazaUiInfo.cmdwin.win, PlazaUiInfo.cmdwin.h,
+        PlazaUiInfo.cmdwin.w);
+    mvderwin(PlazaUiInfo.cmdwin.win,
+        PLAZA_CMD_PADDING_Y, PLAZA_CMD_PADDING_X);
+    */
+
+    init_windows_content();
 }
 
 void plazaui_init()
@@ -104,20 +172,7 @@ void plazaui_init()
     if(has_colors() == TRUE)
         plaza_init_colors();
 
-    // Fill in PlazaUiInfo structure
-    getmaxyx(stdscr, PlazaUiInfo.term.h, PlazaUiInfo.term.w);
-    PlazaUiInfo.cmdbox.h = PLAZA_CMD_HEIGHT;
-    PlazaUiInfo.title.h = PLAZA_TITLE_HEIGHT;
-    PlazaUiInfo.msgbox.h = PlazaUiInfo.term.h - PLAZA_CMD_HEIGHT -
-        PlazaUiInfo.title.h;
-    PlazaUiInfo.msgbox.w = PlazaUiInfo.cmdbox.w = PlazaUiInfo.title.w =
-        PlazaUiInfo.term.w;
-
-    PlazaUiInfo.msgwin.h = PlazaUiInfo.msgbox.h-PLAZA_OUT_PADDING_Y*2;
-    PlazaUiInfo.msgwin.w = PlazaUiInfo.msgbox.w-PLAZA_OUT_PADDING_X*2;
-    PlazaUiInfo.cmdwin.h = PlazaUiInfo.cmdbox.h-PLAZA_CMD_PADDING_Y*2;
-    PlazaUiInfo.cmdwin.w = PlazaUiInfo.cmdbox.w-PLAZA_CMD_PADDING_X*2;
-
+    plaza_update_uiinfo();
     plaza_create_windows();
     plazaio_init();
 }
@@ -133,8 +188,14 @@ void plazaui_destroy()
     endwin();
 }
 
-void plazaui_async_cmd_clear() {
+void plazaui_async_cmd_clear()
+{
     _PLAZAUI_CMD_MUST_CLEAN = true;
+}
+
+void plazaui_async_resize()
+{
+    _PLAZAUI_MUST_RESIZE = true;
 }
 
 void plazaui_refresh_windows() {
@@ -218,6 +279,19 @@ void plazaui_mainloop()
                 wrefresh(PlazaUiInfo.cmdwin.win);
                 i=0;
                 _PLAZAUI_CMD_MUST_CLEAN = false;
+            } else if (_PLAZAUI_MUST_RESIZE) {
+                endwin();
+                initscr();
+                refresh();
+                plaza_update_uiinfo();
+                plaza_update_windows();
+                plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
+                waddnstr(PlazaUiInfo.cmdwin.win, msg.text, i);
+                _PLAZAUI_MUST_RESIZE = false;
+
+                // Eat the resize character
+                ch = wgetch(PlazaUiInfo.cmdwin.win);
+                continue;
             }
 
             // This spins at PLAZA_UPDATE_DELAY/10 seconds

@@ -59,6 +59,7 @@ void plazaui_init();
 void plazaui_destroy();
 void plazaui_mainloop();
 void plazaui_async_cmd_clear();
+void plazaui_async_resize();
 void plazaui_refresh_windows();
 
 extern plazaui_info PlazaUiInfo;
