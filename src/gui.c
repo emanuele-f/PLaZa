@@ -340,9 +340,10 @@ void plazaui_mainloop()
                         break;
                     i--;
                     msg.text[i] = '\0';
-                    wmove(PlazaUiInfo.cmdwin.win, 0, 0);
-                    wclear(PlazaUiInfo.cmdwin.win);
-                    waddstr(PlazaUiInfo.cmdwin.win, msg.text);
+                    getyx(PlazaUiInfo.cmdwin.win, y, x);
+                    wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+                    waddch(PlazaUiInfo.cmdwin.win, ' ');
+                    wmove(PlazaUiInfo.cmdwin.win, y, x-1);
                     break;
                 case KEY_ESCAPE:
                     getyx(PlazaUiInfo.cmdwin.win, y, x);
