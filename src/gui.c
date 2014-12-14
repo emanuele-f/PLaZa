@@ -341,6 +341,10 @@ void plazaui_mainloop()
                     i--;
                     msg.text[i] = '\0';
                     getyx(PlazaUiInfo.cmdwin.win, y, x);
+                    if(x==0 && y>0) {
+                        y--;
+                        x = PlazaUiInfo.msgwin.w;
+                    }
                     mvwdelch(PlazaUiInfo.cmdwin.win, y, x-1);
                     break;
                 case KEY_ESCAPE:
