@@ -4,7 +4,7 @@ clean:
 	rm -f *.o 2>/dev/null
 
 ../plaza: globals.o io.o gui.o main.c
-	gcc -lncurses -Wall -O2 -o ../plaza globals.o utils.o message.o io.o gui.o main.c
+	gcc -lncursesw -Wall -O2 -o ../plaza globals.o utils.o message.o io.o gui.o main.c
 
 globals.o: globals.h globals.c
 	gcc -c -Wall -O2 -o globals.o globals.c
