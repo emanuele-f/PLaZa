@@ -3,9 +3,11 @@
 #include <locale.h>
 #include "unicode.h"
 
-static int _PLAZACH_MAXLEN = 0;
-static wint_t * _PLAZACH_WINT_BUFFER;
-static PLAZA_CHAR * _PLAZACH_CHAR_BUFFER;
+/* Call me before ncurses initialization */
+void plazach_unicode_enable()
+{
+    setlocale(LC_ALL, "");
+}
 
 void plazach_newline(WINDOW * w)
 {
@@ -15,52 +17,53 @@ void plazach_newline(WINDOW * w)
     wmove(w, y+1, 0);
 }
 
-void plazach_init(int maxlength)
+/*
+ * Return value:
+ *      true : ok
+ *      false : error
+ */
+bool plazach_getch(WINDOW * w, PLAZA_CHAR * ch)
 {
-    _PLAZACH_MAXLEN = maxlength;
-    maxlength++;
-    _PLAZACH_WINT_BUFFER = (wint_t*) malloc(maxlength * sizeof(wint_t));
-    _PLAZACH_CHAR_BUFFER = (PLAZA_CHAR*) malloc(maxlength * sizeof(PLAZA_CHAR));
-    setlocale(LC_ALL, "");
+    if ( wget_wch(w, &ch) != OK )
+        return false;
+    return true;
 }
 
-void plazach_destroy()
+bool plazach_putch(WINDOW * w, PLAZA_CHAR ch)
 {
-    free(_PLAZACH_WINT_BUFFER);
-    free(_PLAZACH_CHAR_BUFFER);
-    _PLAZACH_MAXLEN = 0;
-}
+    if (ch == WEOF) {
+        //~ LOG_MESSAGE("Trying to output a WEOF character, aborting");
+        return;
+    }
 
-PLAZA_CHAR plazach_getch(WINDOW * w)
-{
-    wint_t ch;
-
-    wget_wch(w, &ch);
-    return (PLAZA_CHAR)ch;
-}
-
-void plazach_putch(WINDOW * w, PLAZA_CHAR ch)
-{
-    PLAZA_CHAR buf[2];
+    wchar_t buf[2];
     buf[0] = ch;
     buf[1] = '\0';
-    waddwstr(w, buf);
+    if ( ! waddwstr(w, buf) )
+        return false;
+    return true;
 }
 
-PLAZA_CHAR * plazach_gets(WINDOW * w)
+/*
+ * @PARAMETERS
+ *      (WINDOW *) w : window
+ *      (PLAZA_CHAR *) buf : input buffer
+ *      (int) maxlength : maximum number of non-null characters to read
+ *
+ * @RETURNS
+ *      true : Success
+ *      false : Unsuccessful read
+ */
+bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlength)
 {
-    int i;
-
-    wgetn_wstr(w, _PLAZACH_WINT_BUFFER, _PLAZACH_MAXLEN);
-
-    for (i=0; _PLAZACH_WINT_BUFFER[i] != 0; i++) {
-        _PLAZACH_CHAR_BUFFER[i] = _PLAZACH_WINT_BUFFER[i];
-    }
-    _PLAZACH_CHAR_BUFFER[i] = 0;
-    return _PLAZACH_CHAR_BUFFER;
+    if ( wgetn_wstr(w, buf, maxlength) != OK )
+        return false;
+    return true;
 }
 
-void plazach_puts(WINDOW * w, PLAZA_CHAR * buf)
+bool plazach_puts(WINDOW * w, PLAZA_CHAR * buf)
 {
-    waddwstr(w, buf);
+    if ( waddwstr(w, (wchar_t *) buf) != OK )
+        return false;
+    return true;
 }

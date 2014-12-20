@@ -1,12 +1,13 @@
 #include "../src/unicode.h"
+#include "../src/utils.h"
 
 int main(int argc, char **argv)
 {
     PLAZA_CHAR ch;
-    PLAZA_CHAR * buf;
+    PLAZA_CHAR buf[7];
 
     // Locale definition first!
-    plazach_init(5);
+    plazach_unicode_enable();
     initscr();
     cbreak();
 
@@ -14,10 +15,18 @@ int main(int argc, char **argv)
 
     addstr("èèèè "); // implicit unicode
     addstr("\xe2\x9c\x93"); // explicit checkmark unicode
+    /*
+     * uint_t :
+     *
+     * Typedef of a type able to represent any value of type wchar_t that is
+     * a member of the extended character set, as well as an additional
+     * value (not part of that set): WEOF
+     */
+    printw("\nsizeof(w_char_t)=%i sizeof(wint_t)=%i\n", sizeof(wchar_t), sizeof(wint_t));
     plazach_newline(stdscr);
 
     addstr("Singolo carattere: ");
-    ch = plazach_getch(stdscr);
+    plazach_getch(stdscr, &ch);
     plazach_newline(stdscr);
     addstr("Hai inserito: ");
     plazach_putch(stdscr, ch);
@@ -25,7 +34,7 @@ int main(int argc, char **argv)
     refresh();
 
     addstr("Intera linea: ");
-    buf = plazach_gets(stdscr);
+    plazach_gets(stdscr, buf, lengthof(buf));
     plazach_newline(stdscr);
     addstr("Hai inserito: ");
     plazach_puts(stdscr, buf);
@@ -33,9 +42,9 @@ int main(int argc, char **argv)
     refresh();
 
     addstr("Premi un tasto per uscire...");
-    plazach_getch(stdscr);
+    plazach_getch(stdscr, &ch);
 
-    plazach_destroy();
+    //~ plazach_destroy();
     endwin();
     return 0;
 }
