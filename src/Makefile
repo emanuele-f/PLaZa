@@ -1,5 +1,5 @@
 AFLAGS = -Wall -O2
-DFLAGS = -Wall -g -DDEBUG
+DFLAGS = -Wall -g -DDEBUG -DPLAZA_DEBUGON
 
 all: CFLAGS = $(AFLAGS)
 all: ../plaza
