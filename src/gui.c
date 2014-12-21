@@ -346,8 +346,16 @@ void plazaui_mainloop()
                     case KEY_RETURN:
                         break;
                     case KEY_BACKSPACE:
-                        // TODO
-                        //~ i -= plaza_del_multibyte(PlazaUiInfo.cmdwin.win);
+                        if (i > 0) {
+                            if (x==0 && y>0)
+                                wmove(PlazaUiInfo.cmdwin.win, y-1,
+                                    PlazaUiInfo.msgwin.w-1);
+                            else
+                                wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+
+                            if ( wdelch(PlazaUiInfo.cmdwin.win) == OK )
+                                i--;
+                        }
                         break;
                     case KEY_ESCAPE:
                         switch(plaza_get_escaped_key(chs)) {
