@@ -30,10 +30,13 @@
  * ------------------------------------------------------------------------
  */
 
+#include "unicode.h"
 #include <ncurses.h>
 #include "settings.h"
 #include "utils.h"
 #include "gui.h"
+
+static PLAZA_CHAR _MULTIBYTE_BUFFER[25];
 
 static FILE * open_logfile()
 {
@@ -79,18 +82,16 @@ void FATAL_ERROR(char * msg)
     exit(1);
 }
 
-int plaza_get_escaped_key(WINDOW * w)
+int plaza_get_escaped_key(PLAZA_CHAR * chs)
 {
-    // Call me afther ESC
-    int ch, i=0;
-    int chs[25];
+    int i = wcslen((wchar_t *)chs) - 1;
 
-    //~ halfdelay(1);
-    while( (ch = wgetch(w)) != ERR && i<sizeof(chs)/sizeof(int) ) {
-        chs[i] = ch;
-        i++;
-    }
-    //~ halfdelay(PLAZA_UPDATE_DELAY);
+    // Interprets escape sequences
+    if (i<0 || chs[0] != KEY_ESCAPE)
+        return ERR;
+
+    // Skip escape code
+    chs = chs+1;
 
     if (i==0)
         return KEY_ESCAPE;
@@ -157,6 +158,72 @@ int plaza_get_escaped_key(WINDOW * w)
     return ERR;
 }
 
+PLAZA_CHAR * plaza_get_multibyte(WINDOW * w)
+{
+    // tries to guess the character type (ascii/escape)
+    // and reads from stdin acordingly, minimizing wait time.
+
+    //~ halfdelay(1);
+    PLAZA_CHAR ch;
+    int i=0;
+    int maxl=1;
+
+    while(i<maxl && plazach_getch(w, &ch)) {
+        _MULTIBYTE_BUFFER[i] = ch;
+
+        if (i==0) {
+            if (ch == KEY_ESCAPE) {
+                // Escape character
+                maxl = sizeof(_MULTIBYTE_BUFFER)-1;
+            }
+        }
+
+        i++;
+    }
+    //~ halfdelay(PLAZA_UPDATE_DELAY);
+
+    _MULTIBYTE_BUFFER[i] = '\0';
+    return _MULTIBYTE_BUFFER;
+}
+
+/*
+int plaza_del_multibyte(WINDOW * w)
+{
+    // Deletes a multibyte character before cursor
+    // Only a few encoding characted supported
+    // Returns number of deleted bytes
+    int x,y;
+    getyx(w, y, x);
+    char ch[3];
+
+    //
+    //if(x==0 && y>0) {
+    //    y--;
+    //    x = PlazaUiInfo.msgwin.w;
+    //}
+
+    if (x >= 2) {
+        mvwinnstr(w, y, x-2, ch, 2);
+        if ( ((unsigned char) ch[0]) == 0xC3 ) {
+            // à è ì ò ù
+            mvwdelch(w, y, x-1);
+            wdelch(w);
+            //~ wdelch(w);
+            return 2;
+        } else
+            wmove(w, y, x);
+    }
+
+    if (x >= 1) {
+        mvwdelch(w, y, x-1);
+        return 1;
+    }
+
+    return 0;
+}
+*/
+
+/*
 void plaza_printn(WINDOW * win, char * str, int num)
 {
     // Prints num characters of str. String modifications are applied and
@@ -168,6 +235,7 @@ void plaza_printn(WINDOW * win, char * str, int num)
     wprintw(win, str);
     str[num] = old;
 }
+*/
 
 void plaza_init_colors()
 {

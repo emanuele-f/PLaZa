@@ -34,11 +34,11 @@
 #define __PLAZA_GLOBALS_H
 
 #include <stdlib.h>
+#include "unicode.h"
 
-extern char * PlazaUsernick;
+extern PLAZA_CHAR * PlazaUsernick;
 extern int PlazaUsernick_L;
 
 void plaza_load_nickname();
 void plaza_unload_nickname();
-int plaza_message_maxlength();
 #endif

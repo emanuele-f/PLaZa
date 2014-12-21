@@ -33,6 +33,7 @@
 #ifndef  __PLAZA_UTILS_H
 #define __PLAZA_UTILS_H
 
+#include "unicode.h"
 #include <ncurses.h>
 #include <stdbool.h>
 #include <errno.h>
@@ -44,6 +45,7 @@
 #define min(x,y) (x < y ? x : y)
 #define _STR_HELPER(x) #x
 #define STR(x) _STR_HELPER(x)
+#define lengthof(zbuf) ((sizeof(zbuf)/sizeof(zbuf[0]))-1)
 #define KEY_ESCAPE 0x1B
 #undef  KEY_BACKSPACE
 #define KEY_BACKSPACE 0x7F
@@ -64,8 +66,10 @@
 #define PLAZA_DROP_MSG_PALETTE(palette)\
     plaza_drop_palette(PlazaUiInfo.msgwin.win, palette)
 
-int plaza_get_escaped_key(WINDOW *);
-void plaza_printn(WINDOW *, char *, int);
+PLAZA_CHAR * plaza_get_multibyte(WINDOW * w);
+int plaza_get_escaped_key(PLAZA_CHAR*);
+//~ int plaza_del_multibyte(WINDOW * w);
+//~ void plaza_printn(WINDOW *, char *, int);
 void plaza_use_palette(WINDOW * win, int palette, bool bold);
 void plaza_drop_palette(WINDOW * win, int palette);
 void plaza_init_colors();

@@ -1,5 +1,6 @@
 #include "../src/unicode.h"
 #include "../src/utils.h"
+#include <wchar.h>
 
 int main(int argc, char **argv)
 {
@@ -41,10 +42,16 @@ int main(int argc, char **argv)
     plazach_newline(stdscr);
     refresh();
 
+    FILE * f;
+    f = fopen("unicode_test.txt", "w");
+    //~ fwprintf(f, "%s\n", (wchar_t*) buf);
+    fputws((wchar_t*) buf, f);
+    fputws(L"\n", f);
+    fclose(f);
+
     addstr("Premi un tasto per uscire...");
     plazach_getch(stdscr, &ch);
 
-    //~ plazach_destroy();
     endwin();
     return 0;
 }

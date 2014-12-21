@@ -33,13 +33,16 @@
 #ifndef __PLAZA_MESSAGE_H
 #define __PLAZA_MESSAGE_H
 
+#include "unicode.h"
+
 typedef struct plaza_message {
-    char * _buf;
-    char * text;
+    PLAZA_CHAR * _buf;
+    PLAZA_CHAR * text;
 } plaza_message;
 
 void plazamsg_init(plaza_message *msg);
 void plazamsg_destroy(plaza_message *msg);
 void plazamsg_clean(plaza_message *msg);
-char * plazamsg_sign(plaza_message *msg);
+PLAZA_CHAR * plazamsg_sign(plaza_message *msg);
+int plazamsg_maxsize();
 #endif

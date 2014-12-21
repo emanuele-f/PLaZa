@@ -35,12 +35,13 @@
 
 #include <stdbool.h>
 #include "message.h"
+#include "unicode.h"
 
 void plazaio_init();
 void plazaio_destroy();
 bool plazaio_incoming();
 int plazaio_begin();
-char * plazaio_next();
+PLAZA_CHAR * plazaio_next();
 void plazaio_end();
 void plazaio_send_message(plaza_message *);
 

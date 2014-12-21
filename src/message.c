@@ -38,11 +38,8 @@
 
 void plazamsg_init(plaza_message *msg)
 {
-    // +1 : for message text final \0
-    // +1 : for message text final \n
-    // +2 : for ': '
-    msg->_buf = (char *) malloc(PLAZA_MAX_IDSIZE+PLAZA_MAX_MSGSIZE+4);
-    msg->text = msg->_buf + PLAZA_MAX_IDSIZE+2;
+    msg->_buf = (PLAZA_CHAR *) malloc(plazamsg_maxsize());
+    msg->text = msg->_buf + PLAZA_NICK_MAXLENGTH + 2;
 }
 
 void plazamsg_destroy(plaza_message *msg)
@@ -61,21 +58,30 @@ void plazamsg_clean(plaza_message *msg)
     msg->text[0] = '\0';
 }
 
-char * plazamsg_sign(plaza_message *msg)
+PLAZA_CHAR * plazamsg_sign(plaza_message *msg)
 {
     /*
      * Modifies the message internally to make it easy to be sent.
      * After using the return value, call 'clean' before reusing for new
      * data.
      */
-    int text_l = strlen(msg->text);
-    char *begin = (msg->_buf)+PLAZA_MAX_IDSIZE-PlazaUsernick_L;
+    int text_l = wcslen((wchar_t *) msg->text);
+    PLAZA_CHAR * begin = (msg->_buf)+PLAZA_NICK_MAXLENGTH-PlazaUsernick_L;
 
-    strncpy(begin, PlazaUsernick, PlazaUsernick_L);
+    wcsncpy((wchar_t *) begin, (wchar_t *) PlazaUsernick, PlazaUsernick_L);
     begin[PlazaUsernick_L] = ':';
     begin[PlazaUsernick_L+1] = ' ';
     msg->text[text_l] = '\n';
     msg->text[text_l+1] = '\0';
 
     return begin;
+}
+
+int plazamsg_maxsize()
+{
+    // +1 : for message text final \0
+    // +1 : for message text final \n
+    // +2 : for ': '
+    return (PLAZA_NICK_MAXLENGTH + 2 + PLAZA_MSG_MAXLENGTH + 2) *
+        sizeof(PLAZA_CHAR);
 }

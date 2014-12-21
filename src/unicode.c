@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <wchar.h>
 #include "unicode.h"
 
 /* Call me before ncurses initialization */
@@ -24,7 +25,7 @@ void plazach_newline(WINDOW * w)
  */
 bool plazach_getch(WINDOW * w, PLAZA_CHAR * ch)
 {
-    if ( wget_wch(w, &ch) != OK )
+    if ( wget_wch(w, ch) != OK )
         return false;
     return true;
 }
@@ -33,7 +34,7 @@ bool plazach_putch(WINDOW * w, PLAZA_CHAR ch)
 {
     if (ch == WEOF) {
         //~ LOG_MESSAGE("Trying to output a WEOF character, aborting");
-        return;
+        return false;
     }
 
     wchar_t buf[2];
@@ -54,9 +55,9 @@ bool plazach_putch(WINDOW * w, PLAZA_CHAR ch)
  *      true : Success
  *      false : Unsuccessful read
  */
-bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlength)
+bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlenght)
 {
-    if ( wgetn_wstr(w, buf, maxlength) != OK )
+    if ( wgetn_wstr(w, buf, maxlenght) != OK )
         return false;
     return true;
 }
@@ -64,6 +65,13 @@ bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlength)
 bool plazach_puts(WINDOW * w, PLAZA_CHAR * buf)
 {
     if ( waddwstr(w, (wchar_t *) buf) != OK )
+        return false;
+    return true;
+}
+
+bool plazach_putns(WINDOW * w, PLAZA_CHAR * buf, int lenght)
+{
+    if ( waddnwstr(w, (wchar_t *) buf, lenght) != OK )
         return false;
     return true;
 }

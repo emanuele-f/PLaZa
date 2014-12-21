@@ -36,7 +36,7 @@
 #include "utils.h"
 #include "settings.h"
 
-char * PlazaUsernick = NULL;
+PLAZA_CHAR * PlazaUsernick = NULL;
 int PlazaUsernick_L = 0;
 
 void plaza_load_nickname()
@@ -46,30 +46,24 @@ void plaza_load_nickname()
      * USER variables. If none of them is set, PlazaUsernick will be set to
      * '?'.
      */
-
-    char *unknown="?";
-    char *p;
+    char *def = "?";
+    char *p = NULL;
 
     p = getenv("PLAZANICK");
     if (p == NULL) {
         p = getenv("USER");
         if (p == NULL)
-            p = unknown;
+            p = def;
     }
 
-    PlazaUsernick_L = min(strlen(p), PLAZA_MAX_IDSIZE);
-    PlazaUsernick = malloc(PlazaUsernick_L+1);
-    strncpy(PlazaUsernick, p, PlazaUsernick_L);
+    PlazaUsernick_L = min(strlen(p), PLAZA_NICK_MAXLENGTH);
+    PlazaUsernick = (PLAZA_CHAR *) malloc(sizeof(PLAZA_CHAR) *
+        (PlazaUsernick_L+1));
+    mbstowcs((wchar_t*)PlazaUsernick, p, PlazaUsernick_L);
 }
 
 void plaza_unload_nickname()
 {
     free(PlazaUsernick);
     PlazaUsernick_L = 0;
-}
-
-int plaza_message_maxlength()
-{
-    // max message length with null bytes       NICK: MSG
-    return PlazaUsernick_L+2+PLAZA_MAX_MSGSIZE+1;
 }

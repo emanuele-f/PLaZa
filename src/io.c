@@ -31,22 +31,23 @@
  */
 
 #include <stdio.h>
+#include <wchar.h>
 #include <sys/inotify.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <poll.h>
 #include "settings.h"
-#include "globals.h"
 #include "message.h"
 #include "utils.h"
 #include "gui.h"
+#include "unicode.h"
 
-static int MSG_MAX_LENGTH = -1;
+static int MSG_MAX_SIZE = -1;
 static FILE * MSG_STREAM = NULL;
 static int MSG_NOTIFIER = -1;
 static bool NEW_MESSAGES = true;
 static int AVAILABLE_LINES = -1;
-static char * MESSAGES_CACHE = NULL;
+static PLAZA_CHAR * MESSAGES_CACHE = NULL;
 static int MESSAGES_CACHE_CUR = -1;
 static bool MESSAGES_CACHE_LOADED = false;
 
@@ -142,13 +143,13 @@ static void syncfile_open_writing()
 void plazaio_init()
 {
     syncfile_ensure_exists();
-    MSG_MAX_LENGTH = plaza_message_maxlength();
+    MSG_MAX_SIZE = plazamsg_maxsize();
     MSG_NOTIFIER = inotify_init();
     inotify_add_watch(MSG_NOTIFIER, PLAZA_SYNC_FILE, IN_MODIFY);
 
     // Allocate message cache
-    MESSAGES_CACHE = (char *) malloc(
-        MSG_MAX_LENGTH * PLAZA_SYNC_LINES);
+    MESSAGES_CACHE = (PLAZA_CHAR *) malloc(
+        MSG_MAX_SIZE * PLAZA_SYNC_LINES);
     if (MESSAGES_CACHE == NULL)
         FATAL_ERROR("Cannot allocate message cache");
     MESSAGES_CACHE_LOADED = false;
@@ -156,7 +157,7 @@ void plazaio_init()
 
 void plazaio_destroy()
 {
-    MSG_MAX_LENGTH = -1;
+    MSG_MAX_SIZE = -1;
     free(MESSAGES_CACHE);
     MESSAGES_CACHE = NULL;
 
@@ -201,7 +202,7 @@ int plazaio_begin()
     // Read at most last PLAZA_SYNC_LINES
     int lines=-1;
     int i;
-    char * cacheline = MESSAGES_CACHE;
+    PLAZA_CHAR * cacheline = MESSAGES_CACHE;
 
     if (! MESSAGES_CACHE_LOADED || plazaio_incoming()) {
         // Cache update
@@ -210,7 +211,7 @@ int plazaio_begin()
         // Count total lines
         while(!feof(MSG_STREAM)) {
             lines++;
-            fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+            fgetws((wchar_t *) cacheline, MSG_MAX_SIZE, MSG_STREAM);
         }
 
         // Actual seeking
@@ -218,17 +219,17 @@ int plazaio_begin()
         if (lines > PLAZA_SYNC_LINES) {
             // Skip lines
             for(i=0; i<lines-PLAZA_SYNC_LINES; i++)
-                fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+                fgetws((wchar_t *) cacheline, MSG_MAX_SIZE, MSG_STREAM);
             AVAILABLE_LINES = PLAZA_SYNC_LINES;
         } else
             AVAILABLE_LINES = lines;
 
         // Cache lines
         for(i=0; i<AVAILABLE_LINES; i++) {
-            fgets(cacheline, MSG_MAX_LENGTH, MSG_STREAM);
+            fgetws((wchar_t *) cacheline, MSG_MAX_SIZE, MSG_STREAM);
             if (feof(MSG_STREAM))
                 FATAL_MESSAGE("Unexpected end of messages");
-            cacheline += MSG_MAX_LENGTH;
+            cacheline += MSG_MAX_SIZE;
         }
 
         syncfile_ensure_close();
@@ -249,9 +250,9 @@ void plazaio_end()
 /*
  * Next message line or NULL.
  */
-char * plazaio_next()
+PLAZA_CHAR * plazaio_next()
 {
-    char * msg;
+    PLAZA_CHAR * msg;
 
     if (! MESSAGES_CACHE_LOADED)
         return NULL;
@@ -259,7 +260,7 @@ char * plazaio_next()
     if (MESSAGES_CACHE_CUR >= AVAILABLE_LINES)
         return NULL;
 
-    msg = MESSAGES_CACHE + MSG_MAX_LENGTH*MESSAGES_CACHE_CUR;
+    msg = MESSAGES_CACHE + MSG_MAX_SIZE*MESSAGES_CACHE_CUR;
     MESSAGES_CACHE_CUR += 1;
     return msg;
 }
@@ -269,12 +270,12 @@ char * plazaio_next()
  */
 void plazaio_send_message(plaza_message *msg)
 {
-    char *data;
+    PLAZA_CHAR * data;
 
     data = plazamsg_sign(msg);
     syncfile_open_writing();
 
-    if ( fprintf(MSG_STREAM, "%s", data) == 0)
+    if ( fputws((wchar_t*) data, MSG_STREAM) == 0)
         FATAL_ERROR("Cannot write message");
 
     syncfile_ensure_close();
