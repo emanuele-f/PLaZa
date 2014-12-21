@@ -3,3 +3,6 @@ subsystem:
 
 clean:
 	$(MAKE) -C ./src clean
+
+debug:
+	$(MAKE) -C ./src debug
