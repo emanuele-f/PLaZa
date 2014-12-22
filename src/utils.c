@@ -126,7 +126,10 @@ int plaza_get_escaped_key(PLAZA_CHAR * chs)
                     case '3': return KEY_F(11);
                     case '4': return KEY_F(12);
                 }
-            else if (chs[1]=='A' && chs[2]==KEY_ESCAPE)
+            else if (chs[1]=='3') {
+                if (chs[2]=='~')
+                    return KEY_DELETE;
+            } else if (chs[1]=='A' && chs[2]==KEY_ESCAPE)
                 return KEY_PAGEDOWN;
         }
     }

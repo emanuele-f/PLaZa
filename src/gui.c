@@ -285,6 +285,28 @@ static void plaza_show_messages(int delta)
     plazaui_refresh_windows();
 }
 
+#define cursor_back()\
+    if (x==0 && y>0)\
+        wmove(PlazaUiInfo.cmdwin.win, y-1,\
+            PlazaUiInfo.msgwin.w-1);\
+    else\
+        wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+
+#define cursor_forth()\
+    if (x < (i-y*PlazaUiInfo.cmdwin.w)) {\
+        if (x==PlazaUiInfo.cmdwin.w-1)\
+            wmove(PlazaUiInfo.cmdwin.win, y+1, 0);\
+        else\
+            wmove(PlazaUiInfo.cmdwin.win, y, x+1);\
+    }
+
+#define cursor_home()\
+    wmove(PlazaUiInfo.cmdwin.win, 0, 0);
+
+#define cursor_end()\
+    wmove(PlazaUiInfo.cmdwin.win, i/PlazaUiInfo.cmdwin.w,\
+        i%PlazaUiInfo.cmdwin.w);
+
 void plazaui_mainloop()
 {
     /*
@@ -294,8 +316,9 @@ void plazaui_mainloop()
      */
     plaza_message msg;
     PLAZA_CHAR * chs;
-    int ch, chs_l, i;
+    int ch, chs_l;
     int x, y;
+    int i;
     bool run = true;
 
     plazamsg_init(&msg);
@@ -342,11 +365,7 @@ void plazaui_mainloop()
                 switch(ch) {
                     case KEY_BACKSPACE:
                         if (i > 0) {
-                            if (x==0 && y>0)
-                                wmove(PlazaUiInfo.cmdwin.win, y-1,
-                                    PlazaUiInfo.msgwin.w-1);
-                            else
-                                wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+                            cursor_back();
 
                             if ( wdelch(PlazaUiInfo.cmdwin.win) == OK )
                                 i--;
@@ -361,22 +380,27 @@ void plazaui_mainloop()
                                 //~ wmove(PlazaUiInfo.cmdwin.win, y+1, x);
                                 break;
                             case KEY_RIGHT:
-                                //~ wmove(PlazaUiInfo.cmdwin.win, y, x+1);
+                                cursor_forth();
                                 break;
                             case KEY_LEFT:
-                                //~ wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+                                cursor_back();
                                 break;
                             case KEY_HOME:
-                                //~ wmove(PlazaUiInfo.cmdwin.win, y, 0);
+                                cursor_home();
                                 break;
                             case KEY_END:
-                                //~ wmove(PlazaUiInfo.cmdwin.win, y, i);
+                                cursor_end();
                                 break;
                             case KEY_PAGEDOWN:
                                 plaza_show_messages(PLAZA_MOUSE_STEP);
                                 break;
                             case KEY_PAGEUP:
                                 plaza_show_messages(-PLAZA_MOUSE_STEP);
+                                break;
+                            case KEY_DELETE:
+                                if (i > 0)
+                                    if ( wdelch(PlazaUiInfo.cmdwin.win) == OK )
+                                        i--;
                                 break;
                             case KEY_ESCAPE:
                                 run=false;
@@ -385,9 +409,9 @@ void plazaui_mainloop()
                         break;
                     default:
                         if (i+chs_l <= PLAZA_MSG_MAXLENGTH) {
-                            plazach_puts(PlazaUiInfo.cmdwin.win, chs);
-                            //~ plazaui_refresh_windows();
+                            wins_wstr(PlazaUiInfo.cmdwin.win, (wchar_t*)chs);
                             i += chs_l;
+                            cursor_forth();
                         }
                 }
             }
