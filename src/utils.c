@@ -174,7 +174,7 @@ PLAZA_CHAR * plaza_get_multibyte(WINDOW * w)
         if (i==0) {
             if (ch == KEY_ESCAPE) {
                 // Escape character
-                maxl = sizeof(_MULTIBYTE_BUFFER)-1;
+                maxl = lengthof(_MULTIBYTE_BUFFER);
             }
         }
 

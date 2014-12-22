@@ -55,9 +55,9 @@ bool plazach_putch(WINDOW * w, PLAZA_CHAR ch)
  *      true : Success
  *      false : Unsuccessful read
  */
-bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlenght)
+bool plazach_gets(WINDOW * w, PLAZA_CHAR * buf, int maxlength)
 {
-    if ( wgetn_wstr(w, buf, maxlenght) != OK )
+    if ( wgetn_wstr(w, buf, maxlength) != OK )
         return false;
     return true;
 }
@@ -69,9 +69,9 @@ bool plazach_puts(WINDOW * w, PLAZA_CHAR * buf)
     return true;
 }
 
-bool plazach_putns(WINDOW * w, PLAZA_CHAR * buf, int lenght)
+bool plazach_putns(WINDOW * w, PLAZA_CHAR * buf, int length)
 {
-    if ( waddnwstr(w, (wchar_t *) buf, lenght) != OK )
+    if ( waddnwstr(w, (wchar_t *) buf, length) != OK )
         return false;
     return true;
 }

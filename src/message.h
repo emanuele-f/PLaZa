@@ -44,5 +44,5 @@ void plazamsg_init(plaza_message *msg);
 void plazamsg_destroy(plaza_message *msg);
 void plazamsg_clean(plaza_message *msg);
 PLAZA_CHAR * plazamsg_sign(plaza_message *msg);
-int plazamsg_maxlenght();
+int plazamsg_maxlength();
 #endif

@@ -33,8 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <ncursesw/ncurses.h>
 #include "unicode.h"
+#include <ncursesw/ncurses.h>
 #include "gui.h"
 #include "utils.h"
 #include "settings.h"
@@ -79,9 +79,9 @@ static void init_windows_content()
 
     //~ box(PlazaUiInfo.msgbox.win, 0x0,0x0);
     wborder(PlazaUiInfo.msgbox.win, ';', ';', ':',':','+','+','+','+');
-    //~ wborder(PlazaUiInfo.cmdbox.win, '*', '*', '*','*','*','*','*','*');
-
-    box(PlazaUiInfo.cmdbox.win, 0x0,0x0);
+    //~ wborder(PlazaUiInfo.cmdwin.win, '*', '*', '*','*','*','*','*','*');
+    // A plain box
+    box(PlazaUiInfo.cmdbox.win, 0x0, 0x0);
 
     // Refresh with borders
     wrefresh(PlazaUiInfo.msgbox.win);
@@ -302,7 +302,6 @@ void plazaui_mainloop()
     plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
 
     while (run) {
-        wmove(PlazaUiInfo.cmdwin.win, 0, 0);
         wclear(PlazaUiInfo.cmdwin.win);
 
         ch = '\0';
@@ -314,7 +313,7 @@ void plazaui_mainloop()
                 _PLAZAUI_CMD_MUST_CLEAN = false;
             } else if (_PLAZAUI_MUST_RESIZE) {
                 // Save current buffer
-                mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, msg.text, i);
+                mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, (wchar_t*)msg.text, i);
                 endwin();
                 initscr();
                 refresh();
@@ -322,11 +321,9 @@ void plazaui_mainloop()
                 plaza_update_windows();
                 plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
                 // Restore buffer
-                waddnwstr(PlazaUiInfo.cmdwin.win, msg.text, i);
+                waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) msg.text, i);
                 _PLAZAUI_MUST_RESIZE = false;
 
-                // Eat the resize character
-                //~ ch = wgetch(PlazaUiInfo.cmdwin.win);
                 continue;
             }
 
@@ -343,8 +340,6 @@ void plazaui_mainloop()
                 getyx(PlazaUiInfo.cmdwin.win, y, x);
 
                 switch(ch) {
-                    case KEY_RETURN:
-                        break;
                     case KEY_BACKSPACE:
                         if (i > 0) {
                             if (x==0 && y>0)
@@ -383,7 +378,7 @@ void plazaui_mainloop()
                             case KEY_PAGEUP:
                                 plaza_show_messages(-PLAZA_MOUSE_STEP);
                                 break;
-                            case KEY_ESCAPE:// '\0':
+                            case KEY_ESCAPE:
                                 run=false;
                                 break;
                         }
@@ -399,7 +394,7 @@ void plazaui_mainloop()
         }
 
         if (run) {
-            mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, msg.text, i);
+            mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, (wchar_t*)msg.text, i);
             plazaio_send_message(&msg);
         }
     }

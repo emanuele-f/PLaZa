@@ -143,7 +143,7 @@ static void syncfile_open_writing()
 void plazaio_init()
 {
     syncfile_ensure_exists();
-    MSG_MAXLEN = plazamsg_maxlenght();
+    MSG_MAXLEN = plazamsg_maxlength();
     MSG_NOTIFIER = inotify_init();
     inotify_add_watch(MSG_NOTIFIER, PLAZA_SYNC_FILE, IN_MODIFY);
 

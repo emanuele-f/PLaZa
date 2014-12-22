@@ -38,7 +38,7 @@
 
 void plazamsg_init(plaza_message *msg)
 {
-    msg->_buf = (PLAZA_CHAR *) malloc(plazamsg_maxlenght() * sizeof(wchar_t));
+    msg->_buf = (PLAZA_CHAR *) malloc(plazamsg_maxlength() * sizeof(wchar_t));
     msg->text = msg->_buf + PLAZA_NICK_MAXLENGTH + 2;
 }
 
@@ -77,7 +77,7 @@ PLAZA_CHAR * plazamsg_sign(plaza_message *msg)
     return begin;
 }
 
-int plazamsg_maxlenght()
+int plazamsg_maxlength()
 {
     // Must be moltiplied by sizeof(wchar_t)
     // +1 : for message text final \0
