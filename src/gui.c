@@ -339,9 +339,18 @@ static void ncurses_wrap_correct(int *i, int *p, plaza_message *msg)
     /* Used to avoid character buffer cuts due to ncurses bad wrapping */
     int x = *p % PlazaUiInfo.cmdwin.w;
     int y = *p / PlazaUiInfo.cmdwin.w;
+    int skip;
+    PLAZA_CHAR * out = msg->text;
+
+    // Scroll cmdwin content
+    if (y >= PlazaUiInfo.cmdwin.h) {
+        skip = y - PlazaUiInfo.cmdwin.h + 1;
+        out += PlazaUiInfo.cmdwin.w * skip;
+        y = PlazaUiInfo.cmdwin.h-1;
+    }
 
     wclear(PlazaUiInfo.cmdwin.win);
-    waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) msg->text, *i);
+    waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) out, *i);
     wmove(PlazaUiInfo.cmdwin.win, y, x);
 }
 
@@ -389,7 +398,7 @@ void plazaui_mainloop()
                 plaza_update_windows();
                 plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
                 // Restore buffer
-                waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) msg.text, i);
+                ncurses_wrap_correct(&i, &p, &msg);
                 _PLAZAUI_MUST_RESIZE = false;
 
                 continue;
@@ -426,15 +435,19 @@ void plazaui_mainloop()
                                 break;
                             case KEY_RIGHT:
                                 cursor_forth(&x, &y, &p, &i);
+                                ncurses_wrap_correct(&i, &p, &msg);
                                 break;
                             case KEY_LEFT:
                                 cursor_back(&x, &y, &p);
+                                ncurses_wrap_correct(&i, &p, &msg);
                                 break;
                             case KEY_HOME:
                                 cursor_home(&p);
+                                ncurses_wrap_correct(&i, &p, &msg);
                                 break;
                             case KEY_END:
                                 cursor_end(&i, &p);
+                                ncurses_wrap_correct(&i, &p, &msg);
                                 break;
                             case KEY_PAGEDOWN:
                                 plaza_show_messages(PLAZA_MOUSE_STEP);
