@@ -68,7 +68,7 @@ Shortcuts
 * Mouse wheel down / Pade down : scrolls messages down
 * CTRL+C : cleans the prompt (it does NOT quit the program)
 * ESC : quits the program
-* Cursor control: beta feature, only moves the cursor
+* Cursor control: moves the cursor back, forth, begin, end
 
 Known Issues
 ------------
