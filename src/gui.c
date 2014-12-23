@@ -285,27 +285,74 @@ static void plaza_show_messages(int delta)
     plazaui_refresh_windows();
 }
 
-#define cursor_back()\
-    if (x==0 && y>0)\
-        wmove(PlazaUiInfo.cmdwin.win, y-1,\
-            PlazaUiInfo.msgwin.w-1);\
-    else\
-        wmove(PlazaUiInfo.cmdwin.win, y, x-1);
+static void cursor_back(int *xx, int *yy, int *pp)
+{
+    int x = *xx;
+    int y = *yy;
+    int p = *pp;
 
-#define cursor_forth()\
-    if (x < (i-y*PlazaUiInfo.cmdwin.w)) {\
-        if (x==PlazaUiInfo.cmdwin.w-1)\
-            wmove(PlazaUiInfo.cmdwin.win, y+1, 0);\
-        else\
-            wmove(PlazaUiInfo.cmdwin.win, y, x+1);\
+    if (x==0) {
+        if (y>0) {
+            y -= 1;
+            x = PlazaUiInfo.msgwin.w-1;
+        }
+    } else
+        x -= 1;
+    if (x>=0) {
+        wmove(PlazaUiInfo.cmdwin.win, y, x);
+        p -= 1;
     }
 
-#define cursor_home()\
-    wmove(PlazaUiInfo.cmdwin.win, 0, 0);
+    *xx = x;
+    *yy = y;
+    *pp = p;
+}
 
-#define cursor_end()\
-    wmove(PlazaUiInfo.cmdwin.win, i/PlazaUiInfo.cmdwin.w,\
-        i%PlazaUiInfo.cmdwin.w);
+static void cursor_forth(int *x, int *y, int *p, int *i)
+{
+
+    if (*x < (*i - *y * PlazaUiInfo.cmdwin.w)) {
+        if (*x == PlazaUiInfo.cmdwin.w-1)
+            wmove(PlazaUiInfo.cmdwin.win, *y+1, 0);
+        else
+            wmove(PlazaUiInfo.cmdwin.win, *y, *x+1);
+        *p += 1;
+    }
+
+}
+
+static void cursor_home(int *p)
+{
+    wmove(PlazaUiInfo.cmdwin.win, 0, 0);
+    *p = 0;
+}
+
+static void cursor_end(int *i, int *p)
+{
+    wmove(PlazaUiInfo.cmdwin.win, *i/PlazaUiInfo.cmdwin.w,
+        *i%PlazaUiInfo.cmdwin.w);
+    *p = *i;
+}
+
+static void ncurses_wrap_correct(int *i, int *p, plaza_message *msg)
+{
+    /* Used to avoid character buffer cuts due to ncurses bad wrapping */
+    int x = *p % PlazaUiInfo.cmdwin.w;
+    int y = *p / PlazaUiInfo.cmdwin.w;
+
+    wclear(PlazaUiInfo.cmdwin.win);
+    waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) msg->text, *i);
+    wmove(PlazaUiInfo.cmdwin.win, y, x);
+}
+
+static void cursor_delete(int *i, int *p, int *k, plaza_message *msg)
+{
+    for(*k=*p; *k<=*i-1; (*k)++)
+        msg->text[*k] = msg->text[*k+1];
+    (*i)--;
+
+    ncurses_wrap_correct(i, p, msg);
+}
 
 void plazaui_mainloop()
 {
@@ -318,7 +365,7 @@ void plazaui_mainloop()
     PLAZA_CHAR * chs;
     int ch, chs_l;
     int x, y;
-    int i;
+    int i, k, p;
     bool run = true;
 
     plazamsg_init(&msg);
@@ -328,15 +375,13 @@ void plazaui_mainloop()
         wclear(PlazaUiInfo.cmdwin.win);
 
         ch = '\0';
-        i = 0;
+        i = p = 0;
         while(ch != '\n' && run) {
             if(_PLAZAUI_CMD_MUST_CLEAN) {
                 wclear(PlazaUiInfo.cmdwin.win);
-                i=0;
+                i = p = 0;
                 _PLAZAUI_CMD_MUST_CLEAN = false;
             } else if (_PLAZAUI_MUST_RESIZE) {
-                // Save current buffer
-                mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, (wchar_t*)msg.text, i);
                 endwin();
                 initscr();
                 refresh();
@@ -363,12 +408,12 @@ void plazaui_mainloop()
                 getyx(PlazaUiInfo.cmdwin.win, y, x);
 
                 switch(ch) {
+                    case '\n':
+                        break;
                     case KEY_BACKSPACE:
-                        if (i > 0) {
-                            cursor_back();
-
-                            if ( wdelch(PlazaUiInfo.cmdwin.win) == OK )
-                                i--;
+                        if (p > 0) {
+                            cursor_back(&x, &y, &p);
+                            cursor_delete(&i, &p, &k, &msg);
                         }
                         break;
                     case KEY_ESCAPE:
@@ -380,16 +425,16 @@ void plazaui_mainloop()
                                 //~ wmove(PlazaUiInfo.cmdwin.win, y+1, x);
                                 break;
                             case KEY_RIGHT:
-                                cursor_forth();
+                                cursor_forth(&x, &y, &p, &i);
                                 break;
                             case KEY_LEFT:
-                                cursor_back();
+                                cursor_back(&x, &y, &p);
                                 break;
                             case KEY_HOME:
-                                cursor_home();
+                                cursor_home(&p);
                                 break;
                             case KEY_END:
-                                cursor_end();
+                                cursor_end(&i, &p);
                                 break;
                             case KEY_PAGEDOWN:
                                 plaza_show_messages(PLAZA_MOUSE_STEP);
@@ -398,9 +443,8 @@ void plazaui_mainloop()
                                 plaza_show_messages(-PLAZA_MOUSE_STEP);
                                 break;
                             case KEY_DELETE:
-                                if (i > 0)
-                                    if ( wdelch(PlazaUiInfo.cmdwin.win) == OK )
-                                        i--;
+                                if (p < i)
+                                    cursor_delete(&i, &p, &k, &msg);
                                 break;
                             case KEY_ESCAPE:
                                 run=false;
@@ -409,16 +453,27 @@ void plazaui_mainloop()
                         break;
                     default:
                         if (i+chs_l <= PLAZA_MSG_MAXLENGTH) {
-                            wins_wstr(PlazaUiInfo.cmdwin.win, (wchar_t*)chs);
                             i += chs_l;
-                            cursor_forth();
+
+                            // Make place (shift right)
+                            for(k=i-1; k>p; k--)
+                                msg.text[k] = msg.text[k-1];
+
+                            // Do insert
+                            for (k=0; k<chs_l; k++) {
+                                msg.text[p] = chs[k];
+                                p += 1;
+                            }
+
+                            // Update ncurses window
+                            ncurses_wrap_correct(&i, &p, &msg);
                         }
                 }
             }
         }
 
         if (run) {
-            mvwinnwstr(PlazaUiInfo.cmdwin.win, 0, 0, (wchar_t*)msg.text, i);
+            msg.text[i] = '\0';
             plazaio_send_message(&msg);
         }
     }
