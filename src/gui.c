@@ -67,9 +67,9 @@ static void plaza_update_uiinfo()
 static void init_windows_content()
 {
     wborder(PlazaUiInfo.title.win, '|', '|', ' ',' ','/','\\','\\','/');
-    wmove(PlazaUiInfo.title.win, 1, (PlazaUiInfo.title.w-16)/2);
+    wmove(PlazaUiInfo.title.win, 1, (PlazaUiInfo.title.w-17)/2);
     plaza_use_palette(PlazaUiInfo.title.win, PLAZA_PALETTE_TITLE, true);
-    wprintw(PlazaUiInfo.title.win, "PLaZa chat - 0.I");
+    wprintw(PlazaUiInfo.title.win, "PLaZa chat - 0.II");
     plaza_drop_palette(PlazaUiInfo.title.win, PLAZA_PALETTE_TITLE);
     wmove(PlazaUiInfo.title.win, 0, PlazaUiInfo.title.w-PlazaUsernick_L-2);
     plaza_use_palette(PlazaUiInfo.title.win, PLAZA_PALETTE_SELF, true);

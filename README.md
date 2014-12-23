@@ -42,6 +42,11 @@ Features
 * Responsive GUI with cursor control interface
 * Automatic and transparent new messages retrieving
 * Latest messages filter (see settings.h for configuration)
+* Automatic windows resize
+
+Version II:
+* Unicode characters support
+* Full featured line editor
 
 Requirements
 ------------
@@ -67,15 +72,4 @@ Shortcuts
 
 Known Issues
 ------------
-* Multibyte characters (e.g. encoding specific ones) make the cursor
-  behave strange
 * Message scrolling is not perfect when multiline messages are shown
-* Mouse wheel fires a lot of events which causes scrolling to go up and
-  down a bit
-
-TODO
-----
-- [x] Line buffering
-- [ ] Fix scroll issues by grouping messages by lines
-- [ ] Full left-right-up-down-home-end keys support (winsdelln ?)
-- [ ] Properly handle window resizing
