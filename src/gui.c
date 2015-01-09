@@ -347,9 +347,13 @@ static void ncurses_wrap_correct(int *i, int *p, plaza_message *msg)
         skip = y - PlazaUiInfo.cmdwin.h + 1;
         out += PlazaUiInfo.cmdwin.w * skip;
         y = PlazaUiInfo.cmdwin.h-1;
+
+        wclear(PlazaUiInfo.cmdwin.win);
+    } else {
+        // Hack around to clear without clear
+        wmove(PlazaUiInfo.cmdwin.win, 0, 0);
     }
 
-    wclear(PlazaUiInfo.cmdwin.win);
     waddnwstr(PlazaUiInfo.cmdwin.win, (wchar_t*) out, *i);
     wmove(PlazaUiInfo.cmdwin.win, y, x);
 }
@@ -360,6 +364,7 @@ static void cursor_delete(int *i, int *p, int *k, plaza_message *msg)
         msg->text[*k] = msg->text[*k+1];
     (*i)--;
 
+    wdelch(PlazaUiInfo.cmdwin.win);
     ncurses_wrap_correct(i, p, msg);
 }
 
