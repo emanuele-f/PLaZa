@@ -4,7 +4,10 @@
 #include <wchar.h>
 #include "unicode.h"
 
-/* Call me before ncurses initialization */
+/*
+ * Call me before ncurses initialization.
+ * In order to work properly, a utf based locale is required!
+ */
 void plazach_unicode_enable()
 {
     setlocale(LC_ALL, "");

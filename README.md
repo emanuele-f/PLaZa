@@ -62,6 +62,9 @@ To build just use the canonical command `make`and then just `./plaza` to run.
 
 To customize your name you can use `PLAZANICK=altnick ./plaza`
 
+In order to get unicode support, be sure your system is using a utf-based
+locale.
+
 Shortcuts
 ---------
 * Mouse wheel up / Page up : scrolls messages up
