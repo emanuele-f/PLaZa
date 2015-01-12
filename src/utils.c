@@ -189,57 +189,6 @@ PLAZA_CHAR * plaza_get_multibyte(WINDOW * w)
     return _MULTIBYTE_BUFFER;
 }
 
-/*
-int plaza_del_multibyte(WINDOW * w)
-{
-    // Deletes a multibyte character before cursor
-    // Only a few encoding characted supported
-    // Returns number of deleted bytes
-    int x,y;
-    getyx(w, y, x);
-    char ch[3];
-
-    //
-    //if(x==0 && y>0) {
-    //    y--;
-    //    x = PlazaUiInfo.msgwin.w;
-    //}
-
-    if (x >= 2) {
-        mvwinnstr(w, y, x-2, ch, 2);
-        if ( ((unsigned char) ch[0]) == 0xC3 ) {
-            // à è ì ò ù
-            mvwdelch(w, y, x-1);
-            wdelch(w);
-            //~ wdelch(w);
-            return 2;
-        } else
-            wmove(w, y, x);
-    }
-
-    if (x >= 1) {
-        mvwdelch(w, y, x-1);
-        return 1;
-    }
-
-    return 0;
-}
-*/
-
-/*
-void plaza_printn(WINDOW * win, char * str, int num)
-{
-    // Prints num characters of str. String modifications are applied and
-    // reversed.
-    char old;
-
-    old = str[num];
-    str[num] = '\0';
-    wprintw(win, str);
-    str[num] = old;
-}
-*/
-
 void plaza_init_colors()
 {
     start_color();
