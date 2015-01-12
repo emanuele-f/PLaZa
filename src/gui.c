@@ -291,14 +291,13 @@ static void cursor_back(int *xx, int *yy, int *pp)
     int y = *yy;
     int p = *pp;
 
-    if (x==0) {
-        if (y>0) {
-            y -= 1;
-            x = PlazaUiInfo.msgwin.w-1;
-        }
-    } else
+    if (x==0 && y>0) {
+        y -= 1;
+        x = PlazaUiInfo.msgwin.w-1;
+        wmove(PlazaUiInfo.cmdwin.win, y, x);
+        p -= 1;
+    } else if (x>0) {
         x -= 1;
-    if (x>=0) {
         wmove(PlazaUiInfo.cmdwin.win, y, x);
         p -= 1;
     }
