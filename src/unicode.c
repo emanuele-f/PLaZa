@@ -14,12 +14,14 @@ void plazach_unicode_enable()
 {
     char * lang;
 
-    // Initializes LC* variables from LANG
-    lang = setlocale(LC_ALL, "");
+    lang = getenv("LANG");
 
     if ( lang == NULL || strstr(lang, "UTF") == NULL )
         // No unicode locale found
         FATAL_MESSAGE("Current locale is no an UTF locale");
+
+    // Initializes LC* variables from LANG
+    setlocale(LC_ALL, lang);
 }
 
 void plazach_newline(WINDOW * w)
