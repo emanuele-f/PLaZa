@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
+#include <string.h>
 #include <wchar.h>
 #include "unicode.h"
+#include "utils.h"
 
 /*
  * Call me before ncurses initialization.
@@ -10,7 +12,14 @@
  */
 void plazach_unicode_enable()
 {
-    setlocale(LC_ALL, "");
+    char * lang;
+
+    // Initializes LC* variables from LANG
+    lang = setlocale(LC_ALL, "");
+
+    if ( lang == NULL || strstr(lang, "UTF") == NULL )
+        // No unicode locale found
+        FATAL_MESSAGE("Current locale is no an UTF locale");
 }
 
 void plazach_newline(WINDOW * w)

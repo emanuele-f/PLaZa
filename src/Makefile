@@ -28,5 +28,5 @@ message.o: message.h message.c
 utils.o: utils.c utils.h settings.h
 	gcc -c $(CFLAGS) -o utils.o utils.c
 
-unicode.o: unicode.h unicode.c
+unicode.o: unicode.h unicode.c utils.o
 	gcc -c $(CFLAGS) -o unicode.o unicode.c
