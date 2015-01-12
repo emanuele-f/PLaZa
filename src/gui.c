@@ -433,6 +433,12 @@ void plazaui_mainloop()
                 switch(ch) {
                     case '\n':
                         break;
+                    case '\t':
+                        ungetch(' ');
+                        ungetch(' ');
+                        ungetch(' ');
+                        ungetch(' ');
+                        break;
                     case KEY_BACKSPACE:
                         if (p > 0) {
                             cursor_back(&x, &y, &p);
