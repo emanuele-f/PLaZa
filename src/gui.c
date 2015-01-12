@@ -381,6 +381,9 @@ void plazaui_mainloop()
     int x, y;
     int i, k, p;
     bool run = true;
+    #ifdef PLAZA_MESSAGE_BEEP
+        bool mymsg = false;
+    #endif
 
     plazamsg_init(&msg);
     plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
@@ -413,8 +416,15 @@ void plazaui_mainloop()
             chs_l = wcslen((wchar_t *)chs);
 
             if (chs_l == 0) {
-                if (plazaio_incoming())
+                if (plazaio_incoming()) {
                     plaza_show_messages(PLAZAUI_SCROLL_BOTTOM);
+                #ifdef PLAZA_MESSAGE_BEEP
+                    if (mymsg)
+                        mymsg = false;
+                    else
+                        beep();
+                #endif
+                }
                 continue;
             }
             if (chs_l >= 1) {
@@ -493,6 +503,9 @@ void plazaui_mainloop()
         if (run) {
             msg.text[i] = '\0';
             plazaio_send_message(&msg);
+            #ifdef PLAZA_MESSAGE_BEEP
+                mymsg = true;
+            #endif
         }
     }
 
