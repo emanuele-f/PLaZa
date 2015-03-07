@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <time.h>
 #include "unicode.h"
 #include <ncursesw/ncurses.h>
 #include "gui.h"
@@ -259,6 +261,28 @@ static int print_message(PLAZA_CHAR * msg)
     return lines;
 }
 
+#ifdef PLAZA_SHOW_MSGTIME
+static void _show_modification_time() {
+    struct stat stinfo;
+    struct tm timeinfo;
+    char ftstr[20];
+
+    if (stat(PLAZA_SYNC_FILE, &stinfo) != 0) {
+        LOG_MESSAGE(strerror(errno));
+        return;
+    }
+
+    // Build time string
+    localtime_r(&(stinfo.st_mtime), &timeinfo);
+    strftime(ftstr, sizeof(ftstr), "%H:%M:%S - %d/%m/%y", &timeinfo);
+
+    wmove(PlazaUiInfo.msgwin.win,
+        PlazaUiInfo.msgwin.h-1,
+        PlazaUiInfo.msgwin.w-strlen(ftstr)-1);
+    wprintw(PlazaUiInfo.msgwin.win, ftstr);
+}
+#endif
+
 static void plaza_show_messages(int delta)
 {
     // NB. In order to implement scrolling correctly, we would need to be
@@ -282,6 +306,10 @@ static void plaza_show_messages(int delta)
     }
 
     plazaio_end();
+
+    #ifdef PLAZA_SHOW_MSGTIME
+        _show_modification_time();
+    #endif
     plazaui_refresh_windows();
 }
 
