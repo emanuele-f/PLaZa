@@ -18,7 +18,7 @@ void plazach_unicode_enable()
 
     if ( lang == NULL || strstr(lang, "UTF") == NULL )
         // No unicode locale found
-        FATAL_MESSAGE("Current locale is no an UTF locale");
+        FATAL_MESSAGE("Current locale is not an UTF locale");
 
     // Initializes LC* variables from LANG
     setlocale(LC_ALL, lang);
